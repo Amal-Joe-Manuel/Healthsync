@@ -1,0 +1,36 @@
+SIMULATION NOT WORKING? Two things to fix:
+
+1) CORS (required when frontend and backend are different origins)
+
+   In your main.py, add:
+
+   from fastapi.middleware.cors import CORSMiddleware
+
+   app = FastAPI()
+
+   app.add_middleware(
+       CORSMiddleware,
+       allow_origins=["*"],
+       allow_credentials=False,
+       allow_methods=["*"],
+       allow_headers=["*"],
+   )
+
+   Restart: python -m uvicorn main:app --host 0.0.0.0 --port 8000
+
+2) Serve the frontend over HTTP (recommended)
+
+   Opening index.html as file:// can cause CORS issues. From the frontend folder run:
+
+   python -m http.server 8080
+
+   Then open in browser: http://localhost:8080
+
+   Keep the backend on port 8000. With CORS allow_origins=["*"], the request from
+   http://localhost:8080 to http://localhost:8000/demo will be allowed.
+
+3) Backend must have POST /demo
+
+   Your app should have a route that accepts POST with JSON body, e.g.:
+   {"patient_id": "1", "request_type": "cardiology"}
+   and returns JSON with at least: thinking (array), conversation (array), records_shared (array).

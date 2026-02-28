@@ -1,0 +1,55 @@
+Simulation not working? Follow these steps
+==========================================
+
+1) Open the app in the browser: http://localhost:8080
+
+2) Open Developer Tools: press F12, go to the "Console" tab.
+
+3) Select a patient, then a department, then go to the details page.
+   Click "Simulate Hospital Request".
+
+4) In the Console you should see:
+   [HealthSync] POST http://localhost:8000/demo { patient_id: "1", request_type: "cardiology" }
+   [HealthSync] Response 200 { ... }
+
+   If you see "Failed to fetch" or a CORS error (red):
+   -> Add CORS to your backend (see BACKEND_CORS_ADD.txt).
+
+   If you see "Response was not JSON":
+   -> Your backend /demo is returning HTML or plain text. It must return JSON.
+
+   If you see "Backend returned 200 but no thinking/conversation":
+   -> Your JSON must include at least: thinking (array), conversation (array).
+
+5) Backend contract (what the frontend expects)
+   --------------------------------------------
+   • Route: POST http://localhost:8000/demo
+   • Body (JSON): { "patient_id": "1", "request_type": "emergency" }  (or other ids)
+   • Response (JSON) should include:
+     - thinking: array of strings (agent thinking steps)
+     - conversation: array of { "role": "user"|"agent", "content": "..." }
+     - records_shared: array of strings (optional; we can compute from patient/section)
+
+   Example minimal response:
+   {
+     "thinking": ["Step 1...", "Step 2..."],
+     "conversation": [
+       { "role": "user", "content": "Hospital request..." },
+       { "role": "agent", "content": "Here are the records..." }
+     ],
+     "records_shared": ["Record 1", "Record 2"]
+   }
+
+6) Test the backend directly (without the frontend):
+   In PowerShell:
+   Invoke-RestMethod -Uri "http://localhost:8000/demo" -Method POST -ContentType "application/json" -Body '{"patient_id":"1","request_type":"emergency"}'
+
+   If this fails, the problem is the backend (route missing, wrong method, or not returning JSON).
+
+7) Same content for every department (e.g. always Emergency)?
+   ----------------------------------------------------------
+   The frontend sends "request_type" in the body (e.g. "cardiology", "dentistry").
+   Your backend MUST read this and return different thinking/conversation per department.
+   If the backend ignores request_type and always returns the same response, the UI
+   will always show that. In your /demo handler, branch on request_type and return
+   department-specific content.

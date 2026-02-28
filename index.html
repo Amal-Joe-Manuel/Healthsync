@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HealthSync - AI Agent Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --medical-blue: #0d47a1;
+      --medical-blue-light: #1565c0;
+      --medical-blue-dark: #002171;
+      --medical-green: #00695c;
+      --medical-green-light: #00897b;
+      --medical-green-muted: #e0f2f1;
+      --bg-page: #f5f9fc;
+      --bg-card: #ffffff;
+      --text-primary: #1a237e;
+      --text-secondary: #455a64;
+      --border: #b0bec5;
+      --shadow: 0 2px 8px rgba(13, 71, 161, 0.08);
+      --radius: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-page);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 2px solid var(--medical-green-muted);
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--medical-blue-dark);
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      margin-top: 0.35rem;
+    }
+
+    .actions {
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    .btn-demo {
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, var(--medical-blue) 0%, var(--medical-green) 100%);
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 105, 92, 0.25);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .btn-demo:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0, 105, 92, 0.3);
+    }
+
+    .btn-demo:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .section {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 1.25rem;
+      overflow: hidden;
+    }
+
+    .steps-bar {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .step-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: background 0.2s ease;
+    }
+
+    .step-dot.active {
+      background: var(--medical-green);
+      box-shadow: 0 0 0 3px rgba(0, 105, 92, 0.25);
+    }
+
+    .step-dot.done {
+      background: var(--medical-blue-light);
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    .patient-grid, .section-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      min-height: 60px;
+    }
+
+    .patient-card, .section-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .patient-card:hover, .section-card:hover {
+      border-color: var(--medical-green-light);
+      box-shadow: var(--shadow);
+    }
+
+    .patient-card.selected, .section-card.selected {
+      border-color: var(--medical-green);
+      background: var(--medical-green-muted);
+      box-shadow: 0 0 0 2px rgba(0, 105, 92, 0.2);
+    }
+
+    .patient-card .name, .section-card .name {
+      font-weight: 600;
+      color: var(--medical-blue-dark);
+      margin-bottom: 0.25rem;
+    }
+
+    .patient-card .mrn, .section-card .desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .detail-block {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 1.25rem;
+      overflow: hidden;
+    }
+
+    .detail-block h3 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--medical-green);
+      padding: 0.6rem 1rem;
+      background: var(--medical-green-muted);
+      border-bottom: 1px solid rgba(0, 105, 92, 0.12);
+    }
+
+    .detail-block .detail-body {
+      padding: 1rem;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+    }
+
+    .detail-block ul {
+      list-style: none;
+    }
+
+    .detail-block li {
+      padding: 0.35rem 0;
+      padding-left: 1rem;
+      position: relative;
+    }
+
+    .detail-block li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.6em;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--medical-green);
+    }
+
+    .request-type-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .request-type-bar label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .request-type-bar select {
+      font-family: inherit;
+      font-size: 0.95rem;
+      padding: 0.5rem 2rem 0.5rem 0.75rem;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .request-type-bar select:focus {
+      border-color: var(--medical-green-light);
+      outline: none;
+    }
+
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .btn-secondary {
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 0.75rem 1.5rem;
+      border: 2px solid var(--medical-blue);
+      border-radius: var(--radius);
+      background: transparent;
+      color: var(--medical-blue);
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .btn-secondary:hover {
+      background: var(--medical-blue);
+      color: white;
+    }
+
+    .section-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--medical-green);
+      padding: 0.75rem 1.25rem;
+      background: var(--medical-green-muted);
+      border-bottom: 1px solid rgba(0, 105, 92, 0.12);
+    }
+
+    .section-body {
+      padding: 1.25rem;
+      min-height: 80px;
+    }
+
+    .section-body .thinking-area,
+    .section-body .chat-area {
+      scrollbar-width: thin;
+    }
+
+    .chat-area {
+      max-height: 420px;
+      overflow-y: auto;
+      padding: 0.25rem 0;
+    }
+
+    .chat-message {
+      display: flex;
+      gap: 0.875rem;
+      margin-bottom: 1.5rem;
+      align-items: flex-start;
+    }
+
+    .chat-message:last-child {
+      margin-bottom: 0;
+    }
+
+    .chat-message.user {
+      flex-direction: row-reverse;
+    }
+
+    .chat-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .chat-message.agent .chat-avatar {
+      background: var(--medical-blue-light);
+      color: white;
+    }
+
+    .chat-message.user .chat-avatar {
+      background: var(--medical-green);
+      color: white;
+    }
+
+    .chat-bubble {
+      max-width: 82%;
+      padding: 1rem 1.25rem;
+      border-radius: 12px;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    .chat-message.agent .chat-bubble {
+      background: var(--medical-green-muted);
+      color: var(--text-primary);
+      border: 1px solid rgba(0, 105, 92, 0.12);
+    }
+
+    .chat-message.user .chat-bubble {
+      background: var(--medical-blue);
+      color: white;
+    }
+
+    .chat-role {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+      opacity: 0.85;
+    }
+
+    .chat-bubble .chat-content {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .thinking-area {
+      max-height: 260px;
+      overflow-y: auto;
+      padding: 0.25rem 0;
+    }
+
+    .thinking-area + .chat-area {
+      margin-top: 1.25rem;
+    }
+
+    .thinking-step {
+      font-size: 0.9rem;
+      line-height: 1.55;
+      color: var(--text-secondary);
+      padding: 0.65rem 1rem 0.65rem 1.1rem;
+      padding-left: 1.1rem;
+      border-left: 3px solid var(--medical-green-light);
+      margin-bottom: 0.65rem;
+      background: rgba(0, 137, 123, 0.06);
+      border-radius: 0 8px 8px 0;
+    }
+
+    .thinking-step:last-child {
+      margin-bottom: 0;
+    }
+
+    .records-list {
+      list-style: none;
+    }
+
+    .records-list li {
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      position: relative;
+      color: var(--text-primary);
+    }
+
+    .records-list li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.9em;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--medical-green);
+    }
+
+    .empty-state {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      font-style: italic;
+    }
+
+    .error-msg {
+      color: #c62828;
+      font-size: 0.9rem;
+      padding: 0.5rem 0;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 0.5rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>HealthSync - AI Agent Demo</h1>
+      <p class="subtitle">Select a patient, choose request type, then simulate the hospital’s thinking and the hospital request.</p>
+    </header>
+
+    <div class="steps-bar" id="steps-bar" aria-hidden="true">
+      <span class="step-dot active" data-step="0" title="Select patient"></span>
+      <span class="step-dot" data-step="1" title="Select request type"></span>
+      <span class="step-dot" data-step="2" title="Details and simulate"></span>
+    </div>
+
+    <div id="view-patient" class="view active">
+      <h2 class="section-title">Select patient</h2>
+      <div class="patient-grid" id="patient-grid">
+        <div class="patient-card" data-patient-id="1" role="button" tabindex="0" onclick="window.selectPatient('1'); return false;">
+          <div class="name">Lakshmi Sreekumar</div>
+          <div class="mrn">MRN: MRN-88421 &middot; DOB: 1985-03-12</div>
+        </div>
+        <div class="patient-card" data-patient-id="2" role="button" tabindex="0" onclick="window.selectPatient('2'); return false;">
+          <div class="name">Unnikrishnan Nambiar</div>
+          <div class="mrn">MRN: MRN-77209 &middot; DOB: 1972-08-22</div>
+        </div>
+        <div class="patient-card" data-patient-id="3" role="button" tabindex="0" onclick="window.selectPatient('3'); return false;">
+          <div class="name">Anitha Mohanan</div>
+          <div class="mrn">MRN: MRN-55133 &middot; DOB: 1990-11-05</div>
+        </div>
+      </div>
+      <div class="nav-buttons">
+        <span></span>
+        <button type="button" class="btn-demo" id="btn-next-patient" disabled>Next: Request type</button>
+      </div>
+    </div>
+    <script>
+      (function() {
+        window.__patientState = { step: 0, patientId: null, sectionId: null };
+        window.__sectionsList = [
+          { id: "emergency", name: "Emergency", desc: "Blood type, allergies, critical info" },
+          { id: "routine", name: "Routine care", desc: "Last visit, primary doctor, follow-ups" },
+          { id: "lab", name: "Lab results", desc: "Recent labs and test summaries" },
+          { id: "medications", name: "Medications", desc: "Current medications and dosing" },
+          { id: "cardiology", name: "Cardiology", desc: "ECG, echo, BP and heart history" },
+          { id: "dentistry", name: "Dentistry", desc: "Dental visits, X-rays, treatment notes" },
+          { id: "dermatology", name: "Dermatology", desc: "Skin conditions and treatments" }
+        ];
+        function goToStep(step) {
+          window.__patientState.step = step;
+          var vp = document.getElementById("view-patient");
+          var vs = document.getElementById("view-section");
+          var vd = document.getElementById("view-details");
+          if (vp) vp.classList.toggle("active", step === 0);
+          if (vs) vs.classList.toggle("active", step === 1);
+          if (vd) vd.classList.toggle("active", step === 2);
+          var dots = document.querySelectorAll("#steps-bar .step-dot");
+          for (var i = 0; i < dots.length; i++) {
+            dots[i].classList.remove("active", "done");
+            if (i === step) dots[i].classList.add("active");
+            else if (i < step) dots[i].classList.add("done");
+          }
+        }
+        window.selectPatient = function(id) {
+          window.__patientState.patientId = id;
+          var grid = document.getElementById("patient-grid");
+          if (grid) {
+            var cards = grid.querySelectorAll(".patient-card");
+            for (var i = 0; i < cards.length; i++) {
+              var c = cards[i];
+              var did = c.getAttribute("data-patient-id");
+              if (did === id) c.classList.add("selected"); else c.classList.remove("selected");
+            }
+          }
+          var btn = document.getElementById("btn-next-patient");
+          if (btn) btn.disabled = false;
+        };
+        window.setStep = window.setStep || function(step) { goToStep(step); };
+        function fillSectionGrid() {
+          var grid = document.getElementById("section-grid");
+          if (!grid) return;
+          var list = window.__sectionsList;
+          var html = "";
+          for (var i = 0; i < list.length; i++) {
+            var s = list[i];
+            var sel = window.__patientState.sectionId === s.id ? " selected" : "";
+            html += "<div class=\"section-card" + sel + "\" data-section-id=\"" + s.id + "\" role=\"button\" tabindex=\"0\"><div class=\"name\">" + s.name + "</div><div class=\"desc\">" + s.desc + "</div></div>";
+          }
+          grid.innerHTML = html;
+          var cards = grid.querySelectorAll(".section-card");
+          for (var j = 0; j < cards.length; j++) {
+            (function(card) {
+              card.addEventListener("click", function() {
+                var id = card.getAttribute("data-section-id");
+                if (id) {
+                  window.__patientState.sectionId = id;
+                  fillSectionGrid();
+                  var bn = document.getElementById("btn-next-section");
+                  if (bn) bn.disabled = false;
+                }
+              });
+            })(cards[j]);
+          }
+        }
+        document.body.addEventListener("click", function(e) {
+          var t = e.target;
+          var btnNextPatient = document.getElementById("btn-next-patient");
+          var btnNextSection = document.getElementById("btn-next-section");
+          var btnBackSection = document.getElementById("btn-back-section");
+          var btnBackDetails = document.getElementById("btn-back-details");
+          if (btnNextPatient && (t === btnNextPatient || btnNextPatient.contains(t))) {
+            if (window.__patientState.patientId) {
+              goToStep(1);
+              fillSectionGrid();
+            }
+            return;
+          }
+          if (btnNextSection && (t === btnNextSection || btnNextSection.contains(t))) {
+            if (window.__patientState.sectionId) {
+              goToStep(2);
+              if (window.renderDetailsBlocks) window.renderDetailsBlocks();
+            }
+            return;
+          }
+          if (btnBackSection && (t === btnBackSection || btnBackSection.contains(t))) {
+            goToStep(0);
+            return;
+          }
+          if (btnBackDetails && (t === btnBackDetails || btnBackDetails.contains(t))) {
+            goToStep(1);
+            fillSectionGrid();
+            return;
+          }
+          var btnDemo = document.getElementById("btn-demo");
+          if (btnDemo && (t === btnDemo || btnDemo.contains(t)) && !btnDemo.disabled) {
+            if (window.runDemo) window.runDemo();
+            return;
+          }
+        });
+        var btnNext = document.getElementById("btn-next-patient");
+        if (btnNext) {
+          btnNext.addEventListener("click", function() {
+            if (!window.__patientState || !window.__patientState.patientId) return;
+            goToStep(1);
+            fillSectionGrid();
+            if (window.renderSectionGrid) window.renderSectionGrid();
+          });
+        }
+        window.fillSectionGrid = fillSectionGrid;
+        window.goToStep = goToStep;
+      })();
+    </script>
+
+    <div id="view-section" class="view">
+      <h2 class="section-title">What is this request for?</h2>
+      <div class="section-grid" id="section-grid"></div>
+      <div class="nav-buttons">
+        <button type="button" class="btn-secondary" id="btn-back-section">Back</button>
+        <button type="button" class="btn-demo" id="btn-next-section">Next: View details</button>
+      </div>
+    </div>
+
+    <div id="view-details" class="view">
+      <h2 class="section-title" id="details-title">Patient details for this request</h2>
+      <div class="request-type-bar" id="request-type-bar">
+        <label for="request-type-select">Request type:</label>
+        <select id="request-type-select" aria-label="Change request type"></select>
+      </div>
+      <div id="details-blocks"></div>
+      <div class="actions" style="margin-top: 1rem;">
+        <div id="simulate-status" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem; min-height: 1.2rem;"></div>
+        <button type="button" class="btn-demo" id="btn-demo">Simulate Hospital Request</button>
+      </div>
+      <div class="nav-buttons" style="margin-top: 0.5rem;">
+        <button type="button" class="btn-secondary" id="btn-back-details">Back</button>
+        <span></span>
+      </div>
+
+    <section class="section" style="margin-top: 2rem;">
+      <h2 class="section-title">Agent thinking &amp; conversation</h2>
+      <div class="section-body">
+        <div id="thinking-container" class="thinking-area" aria-live="polite"></div>
+        <div id="chat-container" class="chat-area" style="margin-top: 1rem;" aria-live="polite"></div>
+        <p id="conversation-empty" class="empty-state">Click “Simulate Hospital Request” to start.</p>
+        <p id="conversation-error" class="error-msg" style="display: none;"></p>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Records shared</h2>
+      <div class="section-body">
+        <ul id="records-list" class="records-list" aria-live="polite"></ul>
+        <p id="records-empty" class="empty-state">No records shared yet.</p>
+        <p id="records-error" class="error-msg" style="display: none;"></p>
+      </div>
+    </section>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://localhost:8000";
+    const DEMO_URL = `${API_BASE}/demo`;
+
+    const VIEWS = ["view-patient", "view-section", "view-details"];
+    const PATIENTS = [
+      {
+        id: "1",
+        name: "Lakshmi Sreekumar",
+        mrn: "MRN-88421",
+        dob: "1985-03-12",
+        bloodType: "O+",
+        allergies: ["Penicillin", "Latex"],
+        conditions: ["Type 2 diabetes", "Hypertension"],
+        emergencyContact: "Sreekumar (spouse) 98765 43210",
+        lastVisit: "2025-01-15",
+        currentMeds: ["Metformin 500mg", "Lisinopril 10mg"],
+        primaryDoctor: "Dr. Rajeev Nair",
+        recentLabs: "HbA1c 6.8%, BMP within normal limits (Jan 2025)",
+        cardiology: {
+          lastECG: "2024-11-20",
+          echo: "Normal LV function, mild MR",
+          bpMedication: "Lisinopril 10mg"
+        },
+        dentistry: {
+          lastVisit: "2024-09-15",
+          notes: "Scaling done; lower molar 36 – watch"
+        },
+        dermatology: {
+          skinConditions: ["Melasma"],
+          treatments: ["Hydroquinone cream", "Sunscreen advised"]
+        }
+      },
+      {
+        id: "2",
+        name: "Unnikrishnan Nambiar",
+        mrn: "MRN-77209",
+        dob: "1972-08-22",
+        bloodType: "A-",
+        allergies: ["Sulfa drugs", "Peanuts"],
+        conditions: ["Asthma", "GERD"],
+        emergencyContact: "Rema (wife) 98765 43211",
+        lastVisit: "2025-02-01",
+        currentMeds: ["Albuterol inhaler", "Omeprazole 20mg"],
+        primaryDoctor: "Dr. Parvathy Menon",
+        recentLabs: "CBC normal, Lipid panel: LDL 98 (Feb 2025)",
+        cardiology: {
+          lastECG: "2025-01-10",
+          echo: "Mild LVH",
+          bpMedication: "Amlodipine 5mg"
+        },
+        dentistry: {
+          lastVisit: "2025-01-05",
+          notes: "Full mouth prophylaxis; no caries"
+        },
+        dermatology: {
+          skinConditions: ["Psoriasis (scalp)"],
+          treatments: ["Topical steroid", "Coal tar shampoo"]
+        }
+      },
+      {
+        id: "3",
+        name: "Anitha Mohanan",
+        mrn: "MRN-55133",
+        dob: "1990-11-05",
+        bloodType: "B+",
+        allergies: ["Iodine contrast", "Shellfish"],
+        conditions: ["Hypothyroidism"],
+        emergencyContact: "Mohanan (brother) 98765 43212",
+        lastVisit: "2024-12-10",
+        currentMeds: ["Levothyroxine 75mcg"],
+        primaryDoctor: "Dr. Rajeev Nair",
+        recentLabs: "TSH 2.1 mIU/L, free T4 normal (Dec 2024)",
+        cardiology: {
+          lastECG: "2024-06-01",
+          echo: "Normal",
+          bpMedication: "None"
+        },
+        dentistry: {
+          lastVisit: "2024-08-20",
+          notes: "Routine check; one filling – upper premolar"
+        },
+        dermatology: {
+          skinConditions: ["Acne vulgaris"],
+          treatments: ["Adapalene gel", "Oral doxycycline course completed"]
+        }
+      }
+    ];
+    const SECTIONS = [
+      { id: "emergency", name: "Emergency", desc: "Blood type, allergies, critical info" },
+      { id: "routine", name: "Routine care", desc: "Last visit, primary doctor, follow-ups" },
+      { id: "lab", name: "Lab results", desc: "Recent labs and test summaries" },
+      { id: "medications", name: "Medications", desc: "Current medications and dosing" },
+      { id: "cardiology", name: "Cardiology", desc: "ECG, echo, BP and heart history" },
+      { id: "dentistry", name: "Dentistry", desc: "Dental visits, X-rays, treatment notes" },
+      { id: "dermatology", name: "Dermatology", desc: "Skin conditions and treatments" }
+    ];
+
+    var state = window.__patientState || (window.__patientState = { step: 0, patientId: null, sectionId: null });
+
+    const btnDemo = document.getElementById("btn-demo");
+    const thinkingContainer = document.getElementById("thinking-container");
+    const chatContainer = document.getElementById("chat-container");
+    const conversationEmpty = document.getElementById("conversation-empty");
+    const conversationError = document.getElementById("conversation-error");
+    const recordsList = document.getElementById("records-list");
+    const recordsEmpty = document.getElementById("records-empty");
+    const recordsError = document.getElementById("records-error");
+
+    function getPatient() { return PATIENTS.find(p => p.id === state.patientId) || null; }
+    function getSection() { return SECTIONS.find(s => s.id === state.sectionId) || null; }
+
+    function setStep(step) {
+      state.step = step;
+      if (window.goToStep) {
+        window.goToStep(step);
+        if (step === 0) updatePatientSelectionUI();
+        if (step === 1) { if (window.fillSectionGrid) window.fillSectionGrid(); renderSectionGrid(); }
+        if (step === 2) renderDetailsBlocks();
+        return;
+      }
+      VIEWS.forEach((v, i) => {
+        const el = document.getElementById(v);
+        if (el) { el.classList.toggle("active", i === step); }
+      });
+      const dots = document.querySelectorAll("#steps-bar .step-dot");
+      dots.forEach((d, i) => {
+        d.classList.remove("active", "done");
+        if (i === step) d.classList.add("active");
+        else if (i < step) d.classList.add("done");
+      });
+      if (step === 0) updatePatientSelectionUI();
+      if (step === 1) renderSectionGrid();
+      if (step === 2) renderDetailsBlocks();
+    }
+
+    function updatePatientSelectionUI() {
+      var grid = document.getElementById("patient-grid");
+      if (!grid) return;
+      var cards = grid.querySelectorAll(".patient-card");
+      for (var i = 0; i < cards.length; i++) {
+        var card = cards[i];
+        var id = card.getAttribute("data-patient-id");
+        if (id === state.patientId) card.classList.add("selected");
+        else card.classList.remove("selected");
+      }
+      var btnNext = document.getElementById("btn-next-patient");
+      if (btnNext) btnNext.disabled = !state.patientId;
+    }
+
+    function attachPatientCardListeners() {
+      const grid = document.getElementById("patient-grid");
+      if (!grid) return;
+      grid.querySelectorAll(".patient-card").forEach(card => {
+        card.addEventListener("click", function() {
+          const id = card.getAttribute("data-patient-id");
+          if (id) { state.patientId = id; updatePatientSelectionUI(); }
+        });
+        card.addEventListener("keydown", function(e) {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            const id = card.getAttribute("data-patient-id");
+            if (id) { state.patientId = id; updatePatientSelectionUI(); }
+          }
+        });
+      });
+      updatePatientSelectionUI();
+    }
+
+    function renderPatientGrid() {
+      const grid = document.getElementById("patient-grid");
+      if (!grid) return;
+      try {
+        grid.innerHTML = PATIENTS.map(p => {
+          const selected = state.patientId === p.id ? " selected" : "";
+          return `<div class="patient-card${selected}" data-patient-id="${p.id}" role="button" tabindex="0">
+          <div class="name">${escapeHtml(p.name)}</div>
+          <div class="mrn">MRN: ${escapeHtml(p.mrn)} &middot; DOB: ${escapeHtml(p.dob)}</div>
+        </div>`;
+        }).join("");
+        grid.querySelectorAll(".patient-card").forEach(card => {
+          card.addEventListener("click", () => selectPatient(card.dataset.patientId));
+          card.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectPatient(card.dataset.patientId); } });
+        });
+      } catch (e) {
+        console.error("renderPatientGrid error", e);
+      }
+    }
+
+    function selectPatient(id) {
+      state.patientId = id;
+      updatePatientSelectionUI();
+    }
+
+    window.selectPatient = selectPatient;
+    window.setStep = setStep;
+    window.state = state;
+
+    function findPatientCard(el) {
+      while (el && el !== document.body) {
+        if (el.classList && el.classList.contains("patient-card")) return el;
+        el = el.parentElement;
+      }
+      return null;
+    }
+
+    (function initPatientStep() {
+      var btnNext = document.getElementById("btn-next-patient");
+
+      document.body.addEventListener("click", function(e) {
+        var grid = document.getElementById("patient-grid");
+        if (!grid || !grid.contains(e.target)) return;
+        var card = findPatientCard(e.target);
+        if (card) {
+          var id = card.getAttribute("data-patient-id");
+          if (id) selectPatient(id);
+        }
+      });
+
+      document.body.addEventListener("keydown", function(e) {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        var grid = document.getElementById("patient-grid");
+        if (!grid || !grid.contains(e.target)) return;
+        var card = findPatientCard(e.target);
+        if (card) {
+          e.preventDefault();
+          var id = card.getAttribute("data-patient-id");
+          if (id) selectPatient(id);
+        }
+      });
+
+      if (btnNext) {
+        btnNext.addEventListener("click", function() {
+          if (state.patientId) setStep(1);
+        });
+      }
+      updatePatientSelectionUI();
+    })();
+
+    function renderSectionGrid() {
+      var grid = document.getElementById("section-grid");
+      if (!grid) return;
+      grid.innerHTML = SECTIONS.map(function(s) {
+        var selected = state.sectionId === s.id ? " selected" : "";
+        return "<div class=\"section-card" + selected + "\" data-section-id=\"" + s.id + "\" role=\"button\" tabindex=\"0\"><div class=\"name\">" + escapeHtml(s.name) + "</div><div class=\"desc\">" + escapeHtml(s.desc) + "</div></div>";
+      }).join("");
+      grid.querySelectorAll(".section-card").forEach(function(card) {
+        card.addEventListener("click", function() { selectSection(card.getAttribute("data-section-id")); });
+        card.addEventListener("keydown", function(e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectSection(card.getAttribute("data-section-id")); } });
+      });
+    }
+    window.renderSectionGrid = renderSectionGrid;
+
+    function selectSection(id) {
+      state = window.__patientState || state;
+      state.sectionId = id;
+      if (window.__patientState) window.__patientState.sectionId = id;
+      renderSectionGrid();
+      document.getElementById("btn-next-section").disabled = false;
+    }
+
+    function escapeHtml(s) {
+      if (s == null || s === undefined) return "";
+      const div = document.createElement("div");
+      div.textContent = String(s);
+      return div.innerHTML;
+    }
+
+    function renderRequestTypeSelect() {
+      state = window.__patientState || state;
+      const sel = document.getElementById("request-type-select");
+      if (!sel) return;
+      if (sel.options.length === 0) {
+        SECTIONS.forEach(function(s) {
+          const opt = document.createElement("option");
+          opt.value = s.id;
+          opt.textContent = s.name;
+          sel.appendChild(opt);
+        });
+        sel.addEventListener("change", function() {
+          state.sectionId = sel.value;
+          if (window.__patientState) window.__patientState.sectionId = sel.value;
+          renderDetailsBlocks();
+        });
+      }
+      var currentSectionId = (window.__patientState && window.__patientState.sectionId) || state.sectionId || "";
+      state.sectionId = currentSectionId;
+      if (window.__patientState) window.__patientState.sectionId = currentSectionId;
+      sel.value = currentSectionId;
+      var statusEl = document.getElementById("simulate-status");
+      if (statusEl && currentSectionId) {
+        var s = SECTIONS.find(function(sec) { return sec.id === currentSectionId; });
+        statusEl.textContent = s ? "Ready to simulate for: " + s.name : "";
+      }
+    }
+
+    function renderDetailsBlocks() {
+      state = window.__patientState || state;
+      const patient = getPatient();
+      const section = getSection();
+      const container = document.getElementById("details-blocks");
+      const titleEl = document.getElementById("details-title");
+      if (!container || !patient) return;
+      if (!section && window.__patientState && window.__patientState.sectionId) {
+        state.sectionId = window.__patientState.sectionId;
+      } else if (!section) {
+        state.sectionId = SECTIONS[0] ? SECTIONS[0].id : null;
+        if (window.__patientState) window.__patientState.sectionId = state.sectionId;
+      }
+      const sectionNow = getSection();
+      if (titleEl) titleEl.textContent = patient.name + " – " + (sectionNow ? sectionNow.name : "");
+      renderRequestTypeSelect();
+      if (!sectionNow) return;
+      var blocks = [];
+      if (sectionNow.id === "emergency") {
+        blocks = [
+          { title: "Blood type", items: [patient.bloodType] },
+          { title: "Allergies", items: patient.allergies || [] },
+          { title: "Critical conditions", items: patient.conditions || [] },
+          { title: "Emergency contact", items: [patient.emergencyContact] }
+        ];
+      } else if (sectionNow.id === "routine") {
+        blocks = [
+          { title: "Last visit", items: [patient.lastVisit] },
+          { title: "Primary doctor", items: [patient.primaryDoctor] },
+          { title: "Current medications", items: patient.currentMeds || [] }
+        ];
+      } else if (sectionNow.id === "lab") {
+        blocks = [{ title: "Recent labs", items: [patient.recentLabs] }];
+      } else if (sectionNow.id === "medications") {
+        blocks = [{ title: "Current medications", items: patient.currentMeds || [] }];
+      } else if (sectionNow.id === "cardiology") {
+        var c = patient.cardiology || {};
+        blocks = [
+          { title: "Last ECG", items: [c.lastECG || "—"] },
+          { title: "Echo summary", items: [c.echo || "—"] },
+          { title: "BP / cardiac medications", items: [c.bpMedication || "None"] }
+        ];
+      } else if (sectionNow.id === "dentistry") {
+        var d = patient.dentistry || {};
+        blocks = [
+          { title: "Last dental visit", items: [d.lastVisit || "—"] },
+          { title: "Notes", items: [d.notes || "—"] }
+        ];
+      } else if (sectionNow.id === "dermatology") {
+        var s = patient.dermatology || {};
+        blocks = [
+          { title: "Skin conditions", items: s.skinConditions || [] },
+          { title: "Treatments", items: s.treatments || [] }
+        ];
+      }
+      container.innerHTML = blocks.map(b => `
+        <div class="detail-block">
+          <h3>${escapeHtml(b.title)}</h3>
+          <div class="detail-body"><ul>${(b.items || []).map(i => `<li>${escapeHtml(i)}</li>`).join("")}</ul></div>
+        </div>
+      `).join("");
+    }
+    window.renderDetailsBlocks = renderDetailsBlocks;
+
+    const btnNextPatient = document.getElementById("btn-next-patient");
+    const btnNextSection = document.getElementById("btn-next-section");
+    btnNextPatient.disabled = true;
+    btnNextPatient.addEventListener("click", () => {
+      if (!state.patientId) return;
+      setStep(1);
+      btnNextSection.disabled = !state.sectionId;
+    });
+    document.getElementById("btn-back-section").addEventListener("click", () => setStep(0));
+    btnNextSection.addEventListener("click", () => {
+      if (!state.sectionId) return;
+      renderDetailsBlocks();
+      setStep(2);
+    });
+    document.getElementById("btn-back-details").addEventListener("click", () => setStep(1));
+
+    function setLoading(loading) {
+      var btn = document.getElementById("btn-demo");
+      if (btn) {
+        btn.disabled = loading;
+        btn.innerHTML = loading
+          ? '<span class="loading"></span> Simulating…'
+          : "Simulate Hospital Request";
+      }
+    }
+
+    function showConversationError(msg) {
+      var errEl = document.getElementById("conversation-error");
+      var emptyEl = document.getElementById("conversation-empty");
+      if (errEl) { errEl.textContent = msg; errEl.style.display = "block"; }
+      if (emptyEl) emptyEl.style.display = "none";
+    }
+
+    function hideConversationError() {
+      var errEl = document.getElementById("conversation-error");
+      if (errEl) errEl.style.display = "none";
+    }
+
+    function renderThinking(steps) {
+      thinkingContainer.innerHTML = "";
+      if (!steps || steps.length === 0) return;
+      const fragment = document.createDocumentFragment();
+      steps.forEach((text) => {
+        const div = document.createElement("div");
+        div.className = "thinking-step";
+        div.textContent = text;
+        fragment.appendChild(div);
+      });
+      thinkingContainer.appendChild(fragment);
+    }
+
+    function renderChat(messages) {
+      chatContainer.innerHTML = "";
+      if (!messages || messages.length === 0) return;
+      conversationEmpty.style.display = "none";
+      const fragment = document.createDocumentFragment();
+      messages.forEach((msg) => {
+        const role = (msg.role || "agent").toLowerCase();
+        const isUser = role === "user";
+        const div = document.createElement("div");
+        div.className = `chat-message ${isUser ? "user" : "agent"}`;
+        const avatar = document.createElement("div");
+        avatar.className = "chat-avatar";
+        avatar.textContent = isUser ? "H" : "AI";
+        const bubble = document.createElement("div");
+        bubble.className = "chat-bubble";
+        const roleLabel = document.createElement("div");
+        roleLabel.className = "chat-role";
+        roleLabel.textContent = isUser ? "Hospital" : "Agent";
+        const content = document.createElement("div");
+        content.className = "chat-content";
+        content.textContent = msg.content || msg.text || "";
+        bubble.appendChild(roleLabel);
+        bubble.appendChild(content);
+        div.appendChild(avatar);
+        div.appendChild(bubble);
+        fragment.appendChild(div);
+      });
+      chatContainer.appendChild(fragment);
+    }
+
+    function computeRecordsForSelection(patient, section) {
+      if (!patient || !section) return null;
+      const records = [];
+
+      if (section.id === "emergency") {
+        if (patient.allergies && patient.allergies.length) {
+          records.push(`Allergy list for ${patient.name}`);
+        }
+        if (patient.bloodType) {
+          records.push(`Blood type record (${patient.bloodType})`);
+        }
+        if (patient.conditions && patient.conditions.length) {
+          records.push(`Problem list / diagnoses for ${patient.name}`);
+        }
+        if (patient.emergencyContact) {
+          records.push("Emergency contact details");
+        }
+      } else if (section.id === "routine") {
+        if (patient.lastVisit) {
+          records.push(`Last outpatient visit summary (${patient.lastVisit})`);
+        }
+        if (patient.primaryDoctor) {
+          records.push(`Primary care provider info (${patient.primaryDoctor})`);
+        }
+        if (patient.currentMeds && patient.currentMeds.length) {
+          records.push("Active medication list");
+        }
+      } else if (section.id === "lab") {
+        if (patient.recentLabs) {
+          records.push("Recent lab results summary");
+        }
+      } else if (section.id === "medications") {
+        if (patient.currentMeds && patient.currentMeds.length) {
+          records.push("Medication list and dosing");
+        }
+      } else if (section.id === "cardiology") {
+        const c = patient.cardiology;
+        if (c && c.lastECG) records.push("ECG report");
+        if (c && c.echo) records.push("Echocardiogram summary");
+        if (c && c.bpMedication) records.push("Cardiac / BP medication list");
+      } else if (section.id === "dentistry") {
+        const d = patient.dentistry;
+        if (d && d.lastVisit) records.push("Last dental visit record");
+        if (d && d.notes) records.push("Dental treatment notes");
+      } else if (section.id === "dermatology") {
+        const s = patient.dermatology;
+        if (s && s.skinConditions && s.skinConditions.length) records.push("Dermatology problem list");
+        if (s && s.treatments && s.treatments.length) records.push("Skin treatment record");
+      }
+
+      return records;
+    }
+
+    function renderRecords(items) {
+      recordsList.innerHTML = "";
+      recordsEmpty.style.display = "block";
+      recordsError.style.display = "none";
+      if (!items || items.length === 0) return;
+      recordsEmpty.style.display = "none";
+      items.forEach((item) => {
+        const li = document.createElement("li");
+        li.textContent = typeof item === "string" ? item : (item.name || item.title || JSON.stringify(item));
+        recordsList.appendChild(li);
+      });
+    }
+
+    async function runDemo() {
+      var thinkingEl = document.getElementById("thinking-container");
+      var chatEl = document.getElementById("chat-container");
+      var emptyEl = document.getElementById("conversation-empty");
+
+      setLoading(true);
+      hideConversationError();
+      if (emptyEl) emptyEl.style.display = "block";
+      if (thinkingEl) thinkingEl.innerHTML = "";
+      if (chatEl) chatEl.innerHTML = "";
+      renderRecords([]);
+
+      var sel = document.getElementById("request-type-select");
+      state = window.__patientState || state;
+      var requestType = "";
+      if (sel && sel.value) {
+        requestType = sel.value;
+      } else if (state.sectionId) {
+        requestType = state.sectionId;
+      } else {
+        requestType = "";
+      }
+      state.sectionId = requestType;
+      window.__patientState.sectionId = requestType;
+      if (sel && requestType) sel.value = requestType;
+
+      var statusEl = document.getElementById("simulate-status");
+      var sectionName = "";
+      if (requestType) {
+        var s = SECTIONS.find(function(sec) { return sec.id === requestType; });
+        sectionName = s ? s.name : requestType;
+      }
+      if (statusEl) statusEl.textContent = requestType ? "Simulating for: " + sectionName : "";
+
+      if (!requestType) {
+        console.error("[HealthSync] ERROR: request_type is empty! Dropdown value:", sel ? sel.value : "no dropdown", "state.sectionId:", state.sectionId, "__patientState.sectionId:", window.__patientState ? window.__patientState.sectionId : "no __patientState");
+        showConversationError("No department selected. Please go back and select a department (Emergency, Cardiology, etc.).");
+        setLoading(false);
+        return;
+      }
+      var body = { patient_id: state.patientId, request_type: requestType };
+      console.log("[HealthSync] POST " + DEMO_URL);
+      console.log("[HealthSync]   patient_id:", body.patient_id);
+      console.log("[HealthSync]   request_type:", body.request_type, "(" + (SECTIONS.find(function(s) { return s.id === requestType; }) || {}).name + ")");
+      console.log("[HealthSync]   Full body:", body);
+
+      try {
+        var res = await fetch(DEMO_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+
+        var data = {};
+        var contentType = res.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+          data = await res.json().catch(function() { return {}; });
+        } else {
+          var text = await res.text();
+          console.warn("[HealthSync] Response was not JSON:", text.substring(0, 200));
+          showConversationError("Backend returned " + res.status + " (not JSON). Check that POST /demo exists and returns JSON.");
+          setLoading(false);
+          return;
+        }
+
+        console.log("[HealthSync] Response " + res.status, data);
+
+        var patient = getPatient();
+        var section = getSection();
+        var computedRecords = computeRecordsForSelection(patient, section);
+        var recordsToShow = (computedRecords && computedRecords.length)
+          ? computedRecords
+          : (data.records_shared || data.recordsShared || data.records || []);
+
+        if (!res.ok) {
+          showConversationError(data.detail || data.message || "Request failed: " + res.status);
+          renderThinking(personalizeThinking(data.thinking || [], patient, section));
+          renderChat(personalizeConversation(data.conversation || [], patient, section));
+          renderRecords(recordsToShow);
+          setLoading(false);
+          return;
+        }
+
+        renderThinking(personalizeThinking(data.thinking || data.thinking_process || [], patient, section));
+        renderChat(personalizeConversation(data.conversation || data.messages || [], patient, section));
+        renderRecords(recordsToShow);
+
+        if (data.conversation && data.conversation.length > 0) {
+          if (emptyEl) emptyEl.style.display = "none";
+        }
+        if (!data.thinking && !data.conversation && Object.keys(data).length > 0) {
+          showConversationError("Backend returned 200 but no thinking/conversation. Expected: thinking (array), conversation (array), records_shared (array).");
+        }
+      } catch (err) {
+        var msg = "Could not reach " + DEMO_URL + ". ";
+        if (err.message && err.message.indexOf("Failed to fetch") !== -1) {
+          msg += "CORS or network: ensure backend has CORS enabled and is running on port 8000.";
+        } else {
+          msg += (err.message || String(err));
+        }
+        showConversationError(msg);
+        console.error("[HealthSync] runDemo error", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function personalizeThinking(steps, patient, section) {
+      var out = [];
+      var header = "Request for " + (patient ? patient.name : "patient") + ", department: " + (section ? section.name : "N/A") + ".";
+      if (steps.length) out.push(header);
+      for (var i = 0; i < steps.length; i++) out.push(steps[i]);
+      return out.length ? out : [header];
+    }
+
+    function personalizeConversation(messages, patient, section) {
+      var pName = patient ? patient.name : "Patient";
+      var sName = section ? section.name : "N/A";
+      var headerUser = { role: "user", content: "Hospital request for " + pName + " – " + sName + "." };
+      if (!messages.length) return [headerUser, { role: "agent", content: "Processing request for " + pName + " (" + sName + ")." }];
+      var out = [headerUser];
+      for (var j = 0; j < messages.length; j++) {
+        var m = messages[j];
+        var content = (m.content || m.text || "").trim();
+        if (content) out.push({ role: m.role || "agent", content: content });
+      }
+      return out;
+    }
+
+    if (btnDemo) btnDemo.addEventListener("click", runDemo);
+    window.runDemo = runDemo;
+  </script>
+</body>
+</html>
